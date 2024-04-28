@@ -43,10 +43,10 @@ renderer.toneMapping = THREE.ACESFilmicToneMapping;
 renderer.toneMappingExposure = 2;
 
 
-const response = await fetch('../../left_cst_pos_rot.json');
+const response = await fetch('../../left_cst_positions.json');
 let tracts = await response.json();
 
-const tot_tracts_to_render = 1;
+const tot_tracts_to_render = 20;
 tracts = tracts.slice(0, tot_tracts_to_render);
 
 let tot_cylinders = 0;
@@ -61,85 +61,105 @@ console.log(Math.random() * 40 - 20);
 
 
     
+
 gltfLoader.load('./assets/cylinder.glb', function(glb) {
     const mesh = glb.scene.getObjectByName('Object_3');
     const geometry = mesh.geometry.clone();
-    const material = new THREE.MeshBasicMaterial({ color: 0xff0000 });
+    const material = new THREE.MeshPhongMaterial({ color: 0xff0000 }); // Changed from MeshBasicMaterial to MeshPhongMaterial
     const ins_mesh = new THREE.InstancedMesh(geometry, material, tot_cylinders);
+    ins_mesh.castShadow = true; // Enable shadow casting for the cylinders
+    ins_mesh.receiveShadow = true;
     scene.add(ins_mesh);
 
-    
-    // const dummy = new THREE.Object3D();
+    // Lighting
+    const ambientLight = new THREE.AmbientLight(0xffffff, 0.5); // Soft white light
+    scene.add(ambientLight);
+
+    const directionalLight = new THREE.DirectionalLight(0xffffff, 0.75);
+    directionalLight.position.set(0, 1, 0); // Adjust as needed
+    directionalLight.castShadow = true;
+    scene.add(directionalLight);
+
+    // Instance placement
+    // let cylinder = new THREE.Object3D();
+    // let i = 0;
+    // tracts.forEach(tract => {
+    //     tract.forEach(pos_rot => {
+            
+    //         cylinder = new THREE.Object3D();
+    //         cylinder.position.set(pos_rot[0], pos_rot[1], pos_rot[2]);
+    //         // cylinder.rotation.set(pos_rot[3] * (Math.PI/180), pos_rot[3] * (Math.PI/180), pos_rot[5] * (Math.PI/180));
+    //         cylinder.rotation.set(Math.PI/2, 0, 0);
+    //         const cyl_scale = .02;
+    //         cylinder.scale.set(cyl_scale, .1, cyl_scale);
+    //         cylinder.updateMatrix();
+    //         ins_mesh.setMatrixAt(i, cylinder.matrix);
+    //         ins_mesh.setColorAt(i, new THREE.Color(0xff0000)); // Consider varying the color slightly if needed
+    //         i += 1;
+    //     });
+    // });
+
+
     let cylinder = new THREE.Object3D();
     let i = 0;
     tracts.forEach(tract => {
-        tract.forEach(pos_rot => {
-            
-            cylinder = new THREE.Object3D();
-            cylinder.position.set(pos_rot[0], pos_rot[1], pos_rot[2]);
-            // cylinder.setRotationFromEuler(new THREE.Euler(pos_rot[3] * (Math.PI/180), pos_rot[5] * (Math.PI/180), pos_rot[4] * (Math.PI/180)));
-            cylinder.rotation.set(pos_rot[5] * (Math.PI/180), pos_rot[4] * (Math.PI/180), pos_rot[3] * (Math.PI/180));
-            console.log(cylinder);
-            const cyl_scale = .1
-            cylinder.scale.set(cyl_scale, .1, cyl_scale);
+        for(let j = 0; j < Math.floor(tract.length/3); j++) {
+            let x1 = tract[j * 3];
+            let y1 = tract[j * 3 + 1];
+            let z1 = tract[j * 3 + 2];
+            let x2 = tract[j * 3 + 3];
+            let y2 = tract[j * 3 + 4];
+            let z2 = tract[j * 3 + 5];
+
+            // let x = (x1 + x2) / 2;
+            // let y = (y1 + y2) / 2;
+            // let z = (z1 + z2) / 2;
+
+            let dx = x2 - x1;
+            let dy = y2 - y1;
+            let dz = z2 - z1;
+
+            // let length = Math.sqrt(dx * dx + dy * dy + dz * dz);
+
+            // // cylinder = new THREE.Object3D();
+            // cylinder.position.set(x, y, z);
+            // cylinder.rotation.set(0, Math.atan2(dy, dx), Math.acos(dz/length));
+            // const cyl_scale = .02;
+            // cylinder.scale.set(cyl_scale, .1, cyl_scale);
+            // cylinder.updateMatrix();
+            // ins_mesh.setMatrixAt(i, cylinder.matrix);
+            // i+=1;
+
+            // Create a normalized direction vector
+            let dirVector = new THREE.Vector3(dx, dy, dz).normalize();
+
+            // Use the normalized vector to create a quaternion
+            let quaternion = new THREE.Quaternion();
+            quaternion.setFromUnitVectors(new THREE.Vector3(0, 0, 1), dirVector);
+
+            // Set cylinder position to the midpoint
+            let x = (x1 + x2) / 2;
+            let y = (y1 + y2) / 2;
+            let z = (z1 + z2) / 2;
+            cylinder.position.set(x, y, z);
+
+            // Apply the quaternion to the cylinder
+            cylinder.setRotationFromQuaternion(quaternion);
+
+            const cyl_scale = 0.05;
+            cylinder.scale.set(cyl_scale, .1, cyl_scale);  // Adjust the length scaling factor
             cylinder.updateMatrix();
             ins_mesh.setMatrixAt(i, cylinder.matrix);
-            // ins_mesh.setColorAt(i, new THREE.Color(Math.random() * 0xFFFFFF));
-            ins_mesh.setColorAt(i, new THREE.Color(0xff0000));
             i += 1;
-        });
-    });
+        };
+    }); 
 
 
-
-    // const cyl_scale = 5;
-    // cylinder.position.set(1, 1, 1);
-    // cylinder.rotation.set(1 , 1 , 1 );
-    // // console.log(cylinder.rotation);
-    // cylinder.scale.set(cyl_scale, 15, cyl_scale);
-    // cylinder.updateMatrix();
-    // ins_mesh.setMatrixAt(i, cylinder.matrix);
-    // ins_mesh.setColorAt(i, new THREE.Color(Math.random() * 0xFFFFFF));
-    // i += 1;
-
-
-    // const cyl_scale = 5;
-    // cylinder.position.set(tracts[0][0][0], tracts[0][0][1], tracts[0][0][2]);
-    // cylinder.rotation.set(tracts[0][0][3] , tracts[0][0][5] , tracts[0][0][4] );
-    // console.log(cylinder.rotation);
-    // cylinder.scale.set(cyl_scale, 15, cyl_scale);
-    // cylinder.updateMatrix();
-    // ins_mesh.setMatrixAt(i, cylinder.matrix);
-    // ins_mesh.setColorAt(i, new THREE.Color(Math.random() * 0xFFFFFF));
-    // i += 1;
-
-    // cylinder = new THREE.Object3D();
-    // cylinder.position.set(tracts[0][1][0], tracts[0][1][1], tracts[0][1][2]);
-    // cylinder.rotation.set(tracts[0][1][3] , tracts[0][1][5] , tracts[0][1][4] );
-    // console.log(cylinder.rotation);
-    // cylinder.scale.set(cyl_scale, 15, cyl_scale);
-    // cylinder.updateMatrix();
-    // ins_mesh.setMatrixAt(i, cylinder.matrix);
-    // ins_mesh.setColorAt(i, new THREE.Color(Math.random() * 0xFFFFFF));
-    // i += 1;
-    
-
-    // for(let i = 0; i < 10000; i++) {
-    //     dummy.position.x = Math.random() * 40 - 20;
-    //     dummy.position.y = Math.random() * 40 - 20;
-    //     dummy.position.z = Math.random() * 40 - 20;
-
-    //     dummy.rotation.x = Math.random() * 2 * Math.PI;
-    //     dummy.rotation.y = Math.random() * 2 * Math.PI;
-    //     dummy.rotation.z = Math.random() * 2 * Math.PI;
-
-    //     dummy.scale.x = dummy.scale.y = dummy.scale.z = 1 * Math.random();
-
-    //     dummy.updateMatrix();
-    //     ins_mesh.setMatrixAt(i, dummy.matrix);
-    //     ins_mesh.setColorAt(i, new THREE.Color(Math.random() * 0xFFFFFF));
-    // }
+    // Optional: Configure shadows on the renderer
+    renderer.shadowMap.enabled = true;
+    renderer.shadowMap.type = THREE.PCFSoftShadowMap; // Soft shadows
 });
+
 
 // const geometry = new THREE.IcosahedronGeometry();
 // const material = new THREE.MeshPhongMaterial({color: 0xFFEA00});
