@@ -1,7 +1,6 @@
 import * as THREE from 'three';
 import {GLTFLoader} from 'three/examples/jsm/loaders/GLTFLoader';
 import {OrbitControls} from 'three/examples/jsm/controls/OrbitControls';
-import {GLTFLoader} from 'three/examples/jsm/loaders/GLTFLoader.js';
 import {RGBELoader} from 'three/examples/jsm/loaders/RGBELoader.js';
 
 const renderer = new THREE.WebGLRenderer({antialias: true});
