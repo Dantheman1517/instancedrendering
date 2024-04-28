@@ -1,7 +1,6 @@
 import * as THREE from 'three';
-import {GLTFLoader} from 'three/examples/jsm/loaders/GLTFLoader';
-import {OrbitControls} from 'three/examples/jsm/controls/OrbitControls';
 import {GLTFLoader} from 'three/examples/jsm/loaders/GLTFLoader.js';
+import {OrbitControls} from 'three/examples/jsm/controls/OrbitControls.js';
 import {RGBELoader} from 'three/examples/jsm/loaders/RGBELoader.js';
 
 const renderer = new THREE.WebGLRenderer({antialias: true});
@@ -17,12 +16,14 @@ renderer.setClearColor(0xFFEA00);
 const camera = new THREE.PerspectiveCamera(
     45,
     window.innerWidth / window.innerHeight,
-    0.1,
-    1000
+    -1000,
+    0
 );
 
-camera.position.set(0, 6, 15);
+camera.position.set(0, 0, -1000);
 camera.lookAt(scene.position);
+
+// scene.position.set(0, 0, 0);
 
 const controls = new OrbitControls(camera, renderer.domElement);
 controls.update();
@@ -41,34 +42,103 @@ renderer.outputEncoding = THREE.sRGBEncoding;
 renderer.toneMapping = THREE.ACESFilmicToneMapping;
 renderer.toneMappingExposure = 2;
 
-rgbeLoader.load('./assets/MR_INT-005_WhiteNeons_NAD.hdr', function(texture) {
-    texture.mapping = THREE.EquirectangularReflectionMapping;
-    scene.environment = texture;
 
-    gltfLoader.load('./assets/star.glb', function(glb) {
-        const mesh = glb.scene.getObjectByName('Star_Star_0');
-        const geometry = mesh.geometry.clone();
-        const material = mesh.material;
-        const starMesh = new THREE.InstancedMesh(geometry, material, 10000);
-        scene.add(starMesh);
+const response = await fetch('../../left_cst_pos_rot.json');
+let tracts = await response.json();
 
-        const dummy = new THREE.Object3D();
-        for(let i = 0; i < 10000; i++) {
-            dummy.position.x = Math.random() * 40 - 20;
-            dummy.position.y = Math.random() * 40 - 20;
-            dummy.position.z = Math.random() * 40 - 20;
+const tot_tracts_to_render = 1;
+tracts = tracts.slice(0, tot_tracts_to_render);
 
-            dummy.rotation.x = Math.random() * 2 * Math.PI;
-            dummy.rotation.y = Math.random() * 2 * Math.PI;
-            dummy.rotation.z = Math.random() * 2 * Math.PI;
-
-            dummy.scale.x = dummy.scale.y = dummy.scale.z = 0.04 * Math.random();
-
-            dummy.updateMatrix();
-            starMesh.setMatrixAt(i, dummy.matrix);
-            starMesh.setColorAt(i, new THREE.Color(Math.random() * 0xFFFFFF));
-        }
+let tot_cylinders = 0;
+tracts.forEach(tract => {
+    tract.forEach(pos_rot => {
+        tot_cylinders += 1;
     });
+});
+
+console.log(tot_cylinders);
+console.log(Math.random() * 40 - 20);
+
+
+    
+gltfLoader.load('./assets/cylinder.glb', function(glb) {
+    const mesh = glb.scene.getObjectByName('Object_3');
+    const geometry = mesh.geometry.clone();
+    const material = new THREE.MeshBasicMaterial({ color: 0xff0000 });
+    const ins_mesh = new THREE.InstancedMesh(geometry, material, tot_cylinders);
+    scene.add(ins_mesh);
+
+    
+    // const dummy = new THREE.Object3D();
+    let cylinder = new THREE.Object3D();
+    let i = 0;
+    tracts.forEach(tract => {
+        tract.forEach(pos_rot => {
+            
+            cylinder = new THREE.Object3D();
+            cylinder.position.set(pos_rot[0], pos_rot[1], pos_rot[2]);
+            // cylinder.setRotationFromEuler(new THREE.Euler(pos_rot[3] * (Math.PI/180), pos_rot[5] * (Math.PI/180), pos_rot[4] * (Math.PI/180)));
+            cylinder.rotation.set(pos_rot[5] * (Math.PI/180), pos_rot[4] * (Math.PI/180), pos_rot[3] * (Math.PI/180));
+            console.log(cylinder);
+            const cyl_scale = .1
+            cylinder.scale.set(cyl_scale, .1, cyl_scale);
+            cylinder.updateMatrix();
+            ins_mesh.setMatrixAt(i, cylinder.matrix);
+            // ins_mesh.setColorAt(i, new THREE.Color(Math.random() * 0xFFFFFF));
+            ins_mesh.setColorAt(i, new THREE.Color(0xff0000));
+            i += 1;
+        });
+    });
+
+
+
+    // const cyl_scale = 5;
+    // cylinder.position.set(1, 1, 1);
+    // cylinder.rotation.set(1 , 1 , 1 );
+    // // console.log(cylinder.rotation);
+    // cylinder.scale.set(cyl_scale, 15, cyl_scale);
+    // cylinder.updateMatrix();
+    // ins_mesh.setMatrixAt(i, cylinder.matrix);
+    // ins_mesh.setColorAt(i, new THREE.Color(Math.random() * 0xFFFFFF));
+    // i += 1;
+
+
+    // const cyl_scale = 5;
+    // cylinder.position.set(tracts[0][0][0], tracts[0][0][1], tracts[0][0][2]);
+    // cylinder.rotation.set(tracts[0][0][3] , tracts[0][0][5] , tracts[0][0][4] );
+    // console.log(cylinder.rotation);
+    // cylinder.scale.set(cyl_scale, 15, cyl_scale);
+    // cylinder.updateMatrix();
+    // ins_mesh.setMatrixAt(i, cylinder.matrix);
+    // ins_mesh.setColorAt(i, new THREE.Color(Math.random() * 0xFFFFFF));
+    // i += 1;
+
+    // cylinder = new THREE.Object3D();
+    // cylinder.position.set(tracts[0][1][0], tracts[0][1][1], tracts[0][1][2]);
+    // cylinder.rotation.set(tracts[0][1][3] , tracts[0][1][5] , tracts[0][1][4] );
+    // console.log(cylinder.rotation);
+    // cylinder.scale.set(cyl_scale, 15, cyl_scale);
+    // cylinder.updateMatrix();
+    // ins_mesh.setMatrixAt(i, cylinder.matrix);
+    // ins_mesh.setColorAt(i, new THREE.Color(Math.random() * 0xFFFFFF));
+    // i += 1;
+    
+
+    // for(let i = 0; i < 10000; i++) {
+    //     dummy.position.x = Math.random() * 40 - 20;
+    //     dummy.position.y = Math.random() * 40 - 20;
+    //     dummy.position.z = Math.random() * 40 - 20;
+
+    //     dummy.rotation.x = Math.random() * 2 * Math.PI;
+    //     dummy.rotation.y = Math.random() * 2 * Math.PI;
+    //     dummy.rotation.z = Math.random() * 2 * Math.PI;
+
+    //     dummy.scale.x = dummy.scale.y = dummy.scale.z = 1 * Math.random();
+
+    //     dummy.updateMatrix();
+    //     ins_mesh.setMatrixAt(i, dummy.matrix);
+    //     ins_mesh.setColorAt(i, new THREE.Color(Math.random() * 0xFFFFFF));
+    // }
 });
 
 // const geometry = new THREE.IcosahedronGeometry();
