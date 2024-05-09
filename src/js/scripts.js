@@ -43,13 +43,13 @@ renderer.toneMapping = THREE.ACESFilmicToneMapping;
 renderer.toneMappingExposure = 2;
 
 
-const response = await fetch('../../left_cst_positions.json');
+const response = await fetch('../../quat_pos_rot.json');
 let tracts = await response.json();
 
-const tot_tracts_to_render = 2
+const tot_tracts_to_render = 500
 tracts = tracts.slice(0, tot_tracts_to_render);
 
-let tot_cylinders = 1;
+let tot_cylinders = 0;
 tracts.forEach(tract => {
     tract.forEach(pos_rot => {
         tot_cylinders += 1;
@@ -82,6 +82,7 @@ gltfLoader.load('./assets/cylinder.glb', function(glb) {
     let cylinder = new THREE.Object3D();
     let i = 0;
     tracts.forEach(tract => {
+        console.log(tract);
         tract.forEach(pos_rot => {
             
             cylinder = new THREE.Object3D();
@@ -91,7 +92,10 @@ gltfLoader.load('./assets/cylinder.glb', function(glb) {
             cylinder.scale.set(cyl_scale, .1, cyl_scale);
             cylinder.updateMatrix();
             ins_mesh.setMatrixAt(i, cylinder.matrix);
-            ins_mesh.setColorAt(i, new THREE.Color(0xff0000)); // Consider varying the color slightly if needed
+
+            
+
+            ins_mesh.setColorAt(i, new THREE.Color(0xff0000 * pos_rot[0])); // Consider varying the color slightly if needed
             i += 1;
         });
     });
