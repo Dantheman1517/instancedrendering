@@ -36,7 +36,6 @@ directionalLight.position.set(0, 10, 10);
 scene.add(directionalLight);
 
 const gltfLoader = new GLTFLoader();
-const rgbeLoader = new RGBELoader();
 
 renderer.outputEncoding = THREE.sRGBEncoding;
 renderer.toneMapping = THREE.ACESFilmicToneMapping;
